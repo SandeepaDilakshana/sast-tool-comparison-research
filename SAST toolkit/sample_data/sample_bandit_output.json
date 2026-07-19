@@ -1,0 +1,73 @@
+{
+  "results": [
+    {
+      "filename": "introduction/views.py",
+      "line_number": 158,
+      "line_range": [158, 162],
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions",
+      "issue_severity": "MEDIUM",
+      "issue_confidence": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "issue_cwe": {"id": 89, "link": "https://cwe.mitre.org/data/definitions/89.html"}
+    },
+    {
+      "filename": "introduction/views.py",
+      "line_number": 430,
+      "line_range": [428, 434],
+      "test_id": "B602",
+      "test_name": "subprocess_popen_with_shell_equals_true",
+      "issue_severity": "HIGH",
+      "issue_confidence": "HIGH",
+      "issue_text": "subprocess call with shell=True identified, security issue.",
+      "issue_cwe": {"id": 78, "link": "https://cwe.mitre.org/data/definitions/78.html"}
+    },
+    {
+      "filename": "introduction/views.py",
+      "line_number": 460,
+      "line_range": [460, 460],
+      "test_id": "B307",
+      "test_name": "eval",
+      "issue_severity": "MEDIUM",
+      "issue_confidence": "HIGH",
+      "issue_text": "Use of possibly insecure function - consider using safer ast.literal_eval.",
+      "issue_cwe": {"id": 78, "link": "https://cwe.mitre.org/data/definitions/78.html"}
+    },
+    {
+      "filename": "introduction/views.py",
+      "line_number": 214,
+      "line_range": [214, 214],
+      "test_id": "B301",
+      "test_name": "pickle",
+      "issue_severity": "MEDIUM",
+      "issue_confidence": "HIGH",
+      "issue_text": "Pickle library appears to be in use, possible security issue.",
+      "issue_cwe": null
+    },
+    {
+      "filename": "pygoat/settings.py",
+      "line_number": 25,
+      "line_range": [25, 25],
+      "test_id": "B105",
+      "test_name": "hardcoded_password_string",
+      "issue_severity": "LOW",
+      "issue_confidence": "MEDIUM",
+      "issue_text": "Possible hardcoded password: 'lr66%-a!$km5ed@n5ug!tya5bv!0(yqwa1tn!q%0%3m2nh%oml'",
+      "issue_cwe": null
+    },
+    {
+      "filename": "introduction/views.py",
+      "line_number": 71,
+      "line_range": [71, 71],
+      "test_id": "B105",
+      "test_name": "hardcoded_password_string",
+      "issue_severity": "LOW",
+      "issue_confidence": "LOW",
+      "issue_text": "Possible hardcoded password (false positive example - not a real GT vulnerability at this line).",
+      "issue_cwe": null
+    }
+  ],
+  "metrics": {
+    "_totals": {"loc": 3393, "nosec": 0}
+  }
+}

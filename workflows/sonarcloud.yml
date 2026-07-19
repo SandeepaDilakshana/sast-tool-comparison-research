@@ -1,0 +1,120 @@
+name: SonarCloud SAST - 30 Run Speed & Consistency Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sonar-scan:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        run_number: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+
+    steps:
+      - name: Checkout PyGoat
+        uses: actions/checkout@v4
+        with:
+          repository: adeyosemanputra/pygoat 
+          path: pygoat
+          fetch-depth: 0 
+
+      - name: Start Timer
+        id: timer
+        run: |
+          mkdir -p results
+          START=$(date +%s.%N)
+          echo "start_time=$START" >> "$GITHUB_OUTPUT"
+
+      - name: Run SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=sandeepa-dilakshana
+            -Dsonar.projectKey=SandeepaDilakshana_pygoat-security-analysis
+            -Dsonar.sources=pygoat
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.scm.disabled=true
+            -Dsonar.python.version=3.11
+            -Dsonar.sourceEncoding=UTF-8
+
+      - name: Calculate Duration
+        id: sonar_run
+        run: |
+          START="${{ steps.timer.outputs.start_time }}"
+          END=$(date +%s.%N)
+          DURATION=$(echo "$END - $START" | bc)
+          echo "duration=$DURATION" >> "$GITHUB_OUTPUT"
+          echo "Run ${{ matrix.run_number }}: ${DURATION}s"
+
+      - name: Fetch Alert Count from SonarCloud API
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          python3 - <<'EOF'
+          import requests, os, csv, json
+
+          run_number = "${{ matrix.run_number }}"
+          duration = "${{ steps.sonar_run.outputs.duration }}"
+          token = os.environ.get("SONAR_TOKEN")
+          
+          url = "https://sonarcloud.io/api/issues/search?componentKeys=SandeepaDilakshana_pygoat-security-analysis&types=VULNERABILITY&ps=1"
+          
+          response = requests.get(url, auth=(token, ''))
+          data = response.json()
+          
+          alert_count = data.get("paging", {}).get("total", 0)
+
+          row = {
+              "tool": "sonarcloud",
+              "run_number": run_number,
+              "duration_seconds": duration,
+              "alert_count": alert_count
+          }
+
+          file_exists = os.path.exists("results/sonar_summary.csv")
+          with open("results/sonar_summary.csv", "a", newline="") as f:
+              writer = csv.DictWriter(f, fieldnames=row.keys())
+              if not file_exists:
+                  writer.writeheader()
+              writer.writerow(row)
+
+          print(row)
+          EOF
+
+      - name: Upload run summary CSV
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonar-summary-run-${{ matrix.run_number }}
+          path: results/sonar_summary.csv
+          retention-days: 30
+
+  merge-results:
+    needs: sonar-scan
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all summary artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: sonar-summary-run-*
+          path: all-summaries
+          merge-multiple: false
+
+      - name: Merge CSVs into one master file
+        run: |
+          mkdir -p merged
+          echo "tool,run_number,duration_seconds,alert_count" > merged/sonar_master_results.csv
+          find all-summaries -name "sonar_summary.csv" -exec tail -n +2 {} \; >> merged/sonar_master_results.csv
+          cat merged/sonar_master_results.csv
+
+      - name: Upload master results file
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonar-master-results
+          path: merged/sonar_master_results.csv
+          retention-days: 90

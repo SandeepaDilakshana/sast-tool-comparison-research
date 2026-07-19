@@ -1,0 +1,135 @@
+name: Bandit SAST - 30 Run Speed & Consistency Test with SARIF
+
+# Manual trigger - ideal for controlled 30-run testing (Phase 2 of research)
+# Also triggers on push for Phase 1 (auto-scan on commit)
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+
+jobs:
+  bandit-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read       # actions/checkout
+      security-events: write # GitHub Security tab SARIF upload
+      actions: read        # Private repo 
+    strategy:
+      fail-fast: false
+      matrix:
+        run_number: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+
+    steps:
+      - name: Checkout PyGoat (target codebase)
+        uses: actions/checkout@v4
+        with:
+          repository: adeyosemanputra/pygoat
+          path: pygoat
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Bandit and SARIF formatter
+        run: pip install bandit bandit-sarif-formatter
+
+      - name: Run Bandit scan (timed)
+        id: bandit_run
+        run: |
+          mkdir -p results
+          START=$(date +%s.%N)
+
+          # JSON output (For Research)
+          bandit -r pygoat -f json -o results/bandit_run_${{ matrix.run_number }}.json --exit-zero
+          
+          # SARIF output (GitHub Security tab)
+          bandit -r pygoat -f sarif -o results/bandit_run_${{ matrix.run_number }}.sarif --exit-zero
+
+          END=$(date +%s.%N)
+          DURATION=$(echo "$END - $START" | bc)
+          echo "duration=$DURATION" >> "$GITHUB_OUTPUT"
+          echo "Run ${{ matrix.run_number }}: ${DURATION}s"
+
+      - name: Record run metadata (time + alert count)
+        run: |
+          python3 - <<'EOF'
+          import json, os, csv
+
+          run_number = "${{ matrix.run_number }}"
+          duration = "${{ steps.bandit_run.outputs.duration }}"
+
+          with open(f"results/bandit_run_{run_number}.json") as f:
+              data = json.load(f)
+
+          alert_count = len(data.get("results", []))
+
+          row = {
+              "tool": "bandit",
+              "run_number": run_number,
+              "duration_seconds": duration,
+              "alert_count": alert_count
+          }
+
+          file_exists = os.path.exists("results/bandit_summary.csv")
+          with open("results/bandit_summary.csv", "a", newline="") as f:
+              writer = csv.DictWriter(f, fieldnames=row.keys())
+              if not file_exists:
+                  writer.writeheader()
+              writer.writerow(row)
+
+          print(row)
+          EOF
+
+      - name: Upload Bandit scan results to GitHub Security tab
+        if: matrix.run_number == 1
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results/bandit_run_1.sarif
+
+      - name: Upload raw JSON output
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-run-${{ matrix.run_number }}-json
+          path: results/bandit_run_${{ matrix.run_number }}.json
+          retention-days: 30
+
+      - name: Upload raw SARIF output
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-run-${{ matrix.run_number }}-sarif
+          path: results/bandit_run_${{ matrix.run_number }}.sarif
+          retention-days: 30
+
+      - name: Upload run summary CSV
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-summary-run-${{ matrix.run_number }}
+          path: results/bandit_summary.csv
+          retention-days: 30
+
+  #Merge 30 individual summary artifacts to a  CSV
+  merge-results:
+    needs: bandit-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all summary artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bandit-summary-run-*
+          path: all-summaries
+          merge-multiple: false
+
+      - name: Merge CSVs into one master file
+        run: |
+          mkdir -p merged
+          echo "tool,run_number,duration_seconds,alert_count" > merged/bandit_master_results.csv
+          find all-summaries -name "bandit_summary.csv" -exec tail -n +2 {} \; >> merged/bandit_master_results.csv
+          cat merged/bandit_master_results.csv
+
+      - name: Upload master results file
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-master-results
+          path: merged/bandit_master_results.csv
+          retention-days: 90

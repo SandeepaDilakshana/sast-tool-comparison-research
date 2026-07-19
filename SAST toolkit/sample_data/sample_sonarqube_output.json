@@ -1,0 +1,76 @@
+{
+  "total": 7,
+  "issues": [
+    {
+      "key": "AZ-sample-1",
+      "rule": "python:S2077",
+      "severity": "CRITICAL",
+      "component": "pygoat-project:introduction/views.py",
+      "line": 864,
+      "textRange": {"startLine": 864, "endLine": 864},
+      "message": "Make sure using a dynamically formatted SQL query is safe here.",
+      "type": "VULNERABILITY"
+    },
+    {
+      "key": "AZ-sample-2",
+      "rule": "python:S5042",
+      "severity": "MAJOR",
+      "component": "pygoat-project:introduction/views.py",
+      "line": 258,
+      "textRange": {"startLine": 256, "endLine": 260},
+      "message": "Disable the external entity (XXE) resolving capability of this XML parser.",
+      "type": "VULNERABILITY"
+    },
+    {
+      "key": "AZ-sample-3",
+      "rule": "python:S4507",
+      "severity": "MINOR",
+      "component": "pygoat-project:pygoat/settings.py",
+      "line": 30,
+      "textRange": {"startLine": 30, "endLine": 30},
+      "message": "Make sure this debug feature is deactivated before delivering the code in production.",
+      "type": "VULNERABILITY"
+    },
+    {
+      "key": "AZ-sample-4",
+      "rule": "python:S1481",
+      "severity": "MINOR",
+      "component": "pygoat-project:introduction/utility.py",
+      "line": 3,
+      "textRange": {"startLine": 3, "endLine": 3},
+      "message": "Remove the unused local variable (generic hardening suggestion, not a PyGoat ground-truth vulnerability).",
+      "type": "CODE_SMELL"
+    },
+    {
+      "key": "AZ-sample-5",
+      "rule": "python:S5754",
+      "severity": "MAJOR",
+      "component": "pygoat-project:introduction/apis.py",
+      "line": 200,
+      "textRange": {"startLine": 200, "endLine": 200},
+      "message": "Handle this exception or don't catch it at all (generic reliability rule, not security).",
+      "type": "BUG"
+    },
+    {
+      "key": "AZ-sample-6",
+      "rule": "python:S1192",
+      "severity": "MINOR",
+      "component": "pygoat-project:introduction/mitre.py",
+      "line": 50,
+      "textRange": {"startLine": 50, "endLine": 50},
+      "message": "Define a constant instead of duplicating this string literal (code-quality rule, not security).",
+      "type": "CODE_SMELL"
+    },
+    {
+      "key": "AZ-sample-7",
+      "rule": "python:S3776",
+      "severity": "MAJOR",
+      "component": "pygoat-project:challenge/views.py",
+      "line": 10,
+      "textRange": {"startLine": 10, "endLine": 10},
+      "message": "Refactor this function to reduce its Cognitive Complexity (maintainability rule, not security).",
+      "type": "CODE_SMELL"
+    }
+  ]
+}
+
